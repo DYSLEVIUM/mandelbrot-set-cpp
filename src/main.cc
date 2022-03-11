@@ -2,10 +2,14 @@
 
 #include <SFML/Graphics.hpp>
 
-constexpr int WIDTH = 1'280;
-constexpr int HEIGHT = 720;
-constexpr int MAX_ITERATION = 2'56;
+constexpr int WIDTH = 620, HEIGHT = 360;
+constexpr int MAX_ITERATION = 128;
 constexpr int INFINITY = 4;
+constexpr long double ZOOM_FACTOR = 2;
+
+long double min_re = -2.5, max_re = 1;
+long double min_im = -1, max_im = 1;
+
 template <typename T>
 inline T squared(const T& x) {
   return x * x;
@@ -30,15 +34,42 @@ int main() {
     sf::Event event;
     while (window->pollEvent(event)) {
       if (event.type == sf::Event::Closed) window->close();
+      if (event.type == sf::Event::MouseButtonPressed) {
+        auto zoom = [&](long double z) {
+          //  changing the center to the mouse click point
+          long double re_0 =
+              min_re + (max_re - min_re) * event.mouseButton.x / WIDTH;
+          long double im_0 =
+              min_im + (max_im - min_im) * event.mouseButton.y / HEIGHT;
+
+          //  zoom
+          long double scaled_min_re = re_0 - (max_re - min_re) / 2.0 / z;
+          long double scaled_max_re = re_0 + (max_re - min_re) / 2.0 / z;
+          min_re = scaled_min_re;
+          max_re = scaled_max_re;
+
+          long double scaled_min_im = im_0 - (max_im - min_im) / 2.0 / z;
+          long double scaled_max_im = im_0 + (max_im - min_im) / 2.0 / z;
+          min_im = scaled_min_im;
+          max_im = scaled_max_im;
+        };
+        //  left click to zoom in
+        if (event.mouseButton.button == sf::Mouse::Left) {
+          zoom(ZOOM_FACTOR);
+        }
+        //  right click to zoom out
+        else if (event.mouseButton.button == sf::Mouse::Right) {
+          zoom(1.0 / ZOOM_FACTOR);
+        }
+      }
     }
 
     window->clear();
 
+    //  adding parallelization
+#pragma omp parallel for
     for (int y{}; y < HEIGHT; ++y) {
       for (int x{}; x < WIDTH; ++x) {
-        long double min_re = -2.5, max_re = 1;
-        long double min_im = -1, max_im = 1;
-
         const long double re_0 =
             min_re +
             (max_re - min_re) * x / WIDTH;  //  x - axis as the real axis
