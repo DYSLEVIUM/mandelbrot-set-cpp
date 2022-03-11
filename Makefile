@@ -10,4 +10,4 @@ $(executable): $(src_file) $(deps)
 	g++ -std=$(cpp_version) -H $(src_file) -I $(deps)/include -L $(deps)/lib -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -lsfml-network -o $(executable)
 
 clean:
-	rm -rf $(executable)
+	rm -rf $(executable) *.log
